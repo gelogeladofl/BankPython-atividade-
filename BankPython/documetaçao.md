@@ -310,6 +310,7 @@ O protótipo representa o fluxo de navegação do usuário dentro do sistema Ban
 ▓ [3] Painel ADM                                                     ▓
 ▓                                                                    ▓
 ▓ [0] Sair                                                           ▓
+▓                                                                    ▓
 ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
 ```
 
