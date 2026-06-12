@@ -1,483 +1,247 @@
-# 1. Introdução
+# Documentação Técnica de Sistema: BankPython (Versão 2.0)
 
-## 1.1 Objetivo do Sistema
+## 1. Introdução
 
-O sistema **BankPython** tem como objetivo prover um mecanismo de gerenciamento financeiro em memória para contas correntes digitais, permitindo operações bancárias básicas com validação automática de regras de saldo, aplicação de tarifas operacionais e controle de cheque especial através de uma interface CLI.
+### 1.1 Objetivo do Sistema
+O **BankPython** é um sistema de gerenciamento financeiro digital executado inteiramente em memória. Ele provê uma interface de linha de comando (CLI) robusta para operações bancárias correntes, aplicando regras rígidas de validação cadastral, limites de segurança temporais, tarifação operacional e ferramentas de auditoria administrativa.
 
----
-
-## 1.2 Escopo
-
-O sistema contempla:
-
-* Cadastro de contas bancárias;
-* Controle de saldo;
-* Depósitos e saques;
-* Controle de cheque especial;
-* Emissão de extrato simplificado;
-* Encerramento de contas.
-
-O sistema será executado integralmente em memória RAM, sem persistência em banco de dados nesta versão MVP.
+### 1.2 Escopo Atualizado
+O sistema contempla em seu escopo funcional:
+* **Cadastro de contas:** validação cadastral de CPF e bloqueio de datas de nascimento no futuro;
+* **Controle de depósitos:** teto inicial de saldo e amortização de passivos;
+* **Sistema de saques:** dupla validação temporal (limites diários e mensais) e tarifas operacionais fixas;
+* **Painel administrativo:** autenticação, parametrização global e ajuste fino de limites por conta específica;
+* **Módulo institucional:** consulta pública de tarifas vigentes com interface estilizada.
 
 ---
 
-# 2. Visão Geral do Sistema
+## 2. Visão Geral da Arquitetura
 
-O sistema é composto por três módulos principais:
+O sistema adota uma arquitetura modular centralizada em uma estrutura de dados global em memória RAM, segmentada em quatro macro-módulos:
 
 ```text
-                ┌──────────────────────┐
-                │   Interface CLI      │
-                └──────────┬───────────┘
-                           │
-        ┌──────────────────┼──────────────────┐
-        ▼                  ▼                  ▼
-┌────────────────┐ ┌────────────────┐ ┌────────────────┐
-│ Gestão Conta   │ │ Fluxo Financeiro│ │ Histórico      │
-│ CPF Único      │ │ Saque/Depósito │ │ Extrato        │
-└────────────────┘ └────────────────┘ └────────────────┘
+                               ┌────────────────────────────────┐
+                               │   Interface CLI (Menu Principal)│
+                               └───────────────┬────────────────┘
+                                               │
+         ┌────────────────────────┬────────────┴────────────┬────────────────────────┐
+         ▼                        ▼                         ▼                        ▼
+┌─────────────────┐      ┌─────────────────┐       ┌─────────────────┐      ┌─────────────────┐
+│  Gestão Conta   │      │ Fluxo Financeiro│       │  Painel ADM     │      │   Módulo Info   │
+│ ∙ Valida CPF    │      │ ∙ Saque + Taxa  │       │ ∙ Ajuste Limite │      │ ∙ Exibição das  │
+│ ∙ Data Passada  │      │ ∙ Depósito      │       │ ∙ Auditoria     │      │   Tarifas com   │
+│ ∙ Teto Inicial  │      │ ∙ Limite Tempo  │       │ ∙ Patrimônio    │      │   Moldura '▓'   │
+└─────────────────┘      └─────────────────┘       └─────────────────┘      └─────────────────┘
+
 ```
 
 ---
-# 3. Histórias de Usuário (User Stories)
 
-As histórias de usuário representam as necessidades identificadas durante a etapa de levantamento de requisitos junto ao cliente e servem como base para os requisitos funcionais do sistema.
+## 3. Histórias de Usuário (User Stories)
 
-## US-01 — Abertura de Conta Corrente
+### US-01 — Abertura de Conta com Proteção de Lastro
 
-**Como** cliente bancário, **eu quero** abrir uma conta corrente digital **para** realizar operações financeiras de forma segura e organizada.
+**Como** cliente bancário,
 
-### Critérios de Aceitação
+**Quero** abrir uma conta corrente digital informando meus dados validados,
 
-* Informar CPF, data de nascimento, saldo inicial e limite de cheque especial.
-* O CPF não pode existir previamente no sistema.
-* A conta deve ser criada com sucesso.
+**Para** garantir que minha conta seja criada de acordo com as normas de conformidade do banco.
 
----
+#### Critérios de Aceitação:
 
-## US-02 — Realizar Depósito
+* O sistema deve validar matematicamente os dígitos verificadores do CPF.
+* A data de nascimento deve obrigatoriamente pertencer ao passado ou ao dia corrente.
+* O saldo inicial não pode exceder o teto regulatório de **R$ 10.000,00**.
+* O limite inicial do cheque especial não pode exceder o teto de **R$ 5.000,00**.
 
-**Como** cliente bancário, **eu quero** depositar dinheiro em minha conta **para** aumentar meu saldo disponível.
+### US-02 — Realizar Saque com Trava Temporal e Tarifação
 
-### Critérios de Aceitação
+**Como** cliente bancário,
 
-* O valor informado deve ser maior que zero.
-* O saldo deve ser atualizado imediatamente.
-* O depósito deve ser registrado no histórico de movimentações.
-* Caso exista utilização do cheque especial, o depósito deve amortizar automaticamente o saldo negativo.
+**Quero** sacar recursos da minha conta corrente,
 
----
+**Para** utilizar o dinheiro em espécie respeitando meus limites de segurança.
 
-## US-03 — Realizar Saque
+#### Critérios de Aceitação:
 
-**Como** cliente bancário, **eu quero** sacar dinheiro da minha conta **para** utilizar meus recursos financeiros quando necessário.
+* Cada saque deduz uma taxa operacional fixa de **R$ 2,50** (parametrizável).
+* O sistema deve acumular as operações do dia corrente e impedir o saque se o montante diário ultrapassar **R$ 1.000,00**.
+* O sistema deve acumular as operações do mês corrente e impedir o saque se o montante mensal ultrapassar **R$ 5.000,00**.
+* O cálculo deve considerar o Horário Oficial de Brasília (**UTC-3**) para evitar fraudes de relógio.
 
-### Critérios de Aceitação
+### US-03 — Gestão de Limite Customizado (Painel ADM)
 
-* O sistema deve validar saldo e limite do cheque especial.
-* Deve ser aplicada automaticamente a taxa operacional de R$ 2,50.
-* O valor solicitado não pode ultrapassar o limite permitido.
-* O saldo deve ser atualizado imediatamente.
-* A operação deve ser registrada no histórico.
+**Como** administrador do sistema,
 
----
+**Quero** acessar um painel autenticado e alterar o cheque especial de uma conta específica,
 
-## US-04 — Consultar Extrato
+**Para** conceder limites maiores a clientes selecionados sem alterar a regra global de novas contas.
 
-**Como** cliente bancário, **eu quero** consultar meu extrato simplificado **para** acompanhar minhas movimentações financeiras recentes.
+#### Critérios de Aceitação:
 
-### Critérios de Aceitação
-
-* O sistema deve exibir as últimas três movimentações realizadas.
-* Cada movimentação deve apresentar:
-
-  * Tipo da operação;
-  * Valor movimentado;
-  * Saldo resultante;
-  * Data e hora da operação.
+* Exigir usuário (`lucas`) e senha (`123`).
+* Permitir a busca de uma conta ativa via CPF.
+* Atualizar o limite de cheque especial especificamente para a conta selecionada e registrar o evento no extrato do cliente para fins de auditoria.
 
 ---
 
-## US-05 — Encerrar Conta
+## 4. Requisitos do Sistema
 
-**Como** cliente bancário, **eu quero** encerrar minha conta corrente **para** finalizar meu relacionamento com o banco digital.
+### 4.1 Requisitos Funcionais (RF)
 
-### Critérios de Aceitação
+* **SYS-RF-01 (Abertura de Conta Corrente):** O sistema deve cadastrar contas sob a chave de um CPF válido e único, exigindo data de nascimento passada, saldo inicial ($\le$ R$ 10.000,00) e limite de cheque especial ($\le$ R$ 5.000,00).
+* **SYS-RF-02 (Validação Temporal de Saques):** O sistema deve varrer o histórico da conta nas janelas diárias e mensais antes de autorizar um novo débito de saque.
+* **SYS-RF-03 (Consulta de Extrato Estendida):** O sistema deve exibir de forma decrescente as últimas 5 movimentações reais da conta corrente.
+* **SYS-RF-04 (Alteração de Parâmetro por Conta Alvo):** O painel administrativo deve isolar e modificar o limite de cheque especial de um CPF específico sem impactar o teto global de novas contas.
+* **SYS-RF-05 (Painel Institucional Transparente):** O sistema deve exibir de forma clara todas as taxas e limites máximos em vigor, acessível publicamente sem autenticação.
 
-* O saldo da conta deve ser igual a R$ 0,00.
-* Não pode existir utilização ativa do cheque especial.
-* O sistema deve confirmar o encerramento da conta.
+### 4.2 Regras de Negócio (Business Rules)
 
-# 4. Requisitos do Sistema
+As Regras de Negócio definem as restrições, cálculos e comportamentos operacionais inflexíveis do sistema BankPython. Qualquer alteração de código deve, obrigatoriamente, respeitar as diretrizes abaixo.
 
-## 4.1 Requisitos Funcionais (Functional Requirements)
+#### SYS-RN-01 — Invariante de Saldo e Limite para Saques
 
----
+Toda e qualquer tentativa de saque solicitada pelo cliente passará por uma validação matemática de fundos. A soma do valor solicitado com a taxa de saque não pode ultrapassar o patrimônio líquido imediatamente disponível da conta (saldo real + limite de crédito).
 
-### SYS-RF-01 — Abertura de Conta Corrente
+$$Valor_{\text{Saque}} + Taxa_{\text{Operacional}} \le Saldo_{\text{Atual}} + Limite_{\text{ChequeEspecial}}$$
 
-**Prioridade:** Alta
+* **Comportamento:** Se a equação for falsa, o sistema aborta a transação e exibe uma mensagem de saldo insuficiente.
 
-#### Descrição
+#### SYS-RN-02 — Tarifação Operacional Compulsória
 
-O sistema deve permitir a criação de contas bancárias vinculadas a um cliente.
+Todo saque autorizado pelo sistema sofrerá a incidência imediata de uma tarifa operacional fixa, atualmente estipulada em **R$ 2,50**.
 
-#### Dados obrigatórios
+* **Gatilho:** Aplicada no exato momento do débito do saque.
+* **Isolamento:** O valor deve ser lido da variável global parametrizada, permitindo que o Administrador altere a taxa globalmente sem quebrar o fluxo.
 
-* CPF
-* Data de nascimento
-* Saldo inicial
-* Limite do cheque especial
+#### SYS-RN-03 — Sincronização Cronológica (Fuso Horário de Brasília)
 
-#### Critério de Aceitação
+Para mitigar fraudes baseadas em manipulação de relógios locais (do lado do cliente) ou inconsistências de fuso horário em servidores de nuvem, todas as operações de validação de datas e registros de transações devem utilizar o fuso horário oficial de Brasília: **UTC-3**.
 
-* O CPF não pode existir previamente no sistema.
-* A conta deve ser criada com sucesso na estrutura de dados.
+#### SYS-RN-04 — Algoritmo de Validação Coercitiva de CPF
 
----
+O sistema não aceitará strings genéricas no campo de identificação fiscal. O CPF informado na abertura da conta deve passar por uma esteira de três validações:
 
-### SYS-RF-02 — Processamento de Depósito
+* **Limpeza de caracteres:** Remoção de pontos, traços ou espaços.
+* **Bloqueio de sequências falsas:** Rejeição de strings com 11 dígitos idênticos (Ex: `111.111.111-11`).
+* **Módulo 11:** Validação matemática dos dois dígitos verificadores (DV) com base nos 9 primeiros números.
 
-**Prioridade:** Alta
+#### SYS-RN-05 — Proteção de Validação Cronológica (Idade/Nascimento)
 
-#### Descrição
+No ato da abertura de conta, a data de nascimento do titular é convertida em um objeto temporal e comparada estritamente com a data atual fornecida pela SYS-RN-03.
 
-O sistema deve processar depósitos financeiros em contas ativas.
+$$Data_{\text{Nascimento}} \le Data_{\text{Hoje}}$$
 
-#### Critério de Aceitação
+* **Restrição:** O sistema bloqueará o avanço do cadastro se a data informada for posterior ao dia de hoje.
 
-* O saldo deve ser atualizado imediatamente.
-* Caso exista saldo negativo, o valor deve amortizar automaticamente o cheque especial.
+#### SYS-RN-06 — Teto de Aporte Inicial (Garantia de Lastro)
 
----
+Como medida de segurança contra lavagem de dinheiro ou erros de digitação grosseiros no ambiente CLI, o saldo inicial depositado no momento da abertura da conta é limitado ao valor máximo de **R$ 10.000,00**.
 
-### SYS-RF-03 — Processamento de Saque
+* **Comportamento:** O sistema rejeita valores negativos e valores superiores a R$ 10.000,00.
 
-**Prioridade:** Alta
+#### SYS-RN-07 — Teto do Limite Inicial de Cheque Especial
 
-#### Descrição
+O crédito pré-aprovado fornecido automaticamente para novas contas criadas por usuários comuns possui um limite regulatório máximo intransponível de **R$ 5.000,00**.
 
-O sistema deve permitir saques considerando saldo disponível e cheque especial.
+* **Exceção:** Este limite aplica-se estritamente à função de criação de conta comum (`abrir_conta`), não limitando as ações diretas do Painel Administrativo.
 
-#### Critério de Aceitação
+#### SYS-RN-08 — Trava Temporal de Segurança (Limites de Saque)
 
-* O saque deve incluir taxa operacional fixa.
-* O sistema deve bloquear saques acima do limite permitido.
-* O saldo deve ser atualizado imediatamente.
+Antes de autorizar a saída de capital via saque, o sistema varre o histórico (extrato) da conta ativa para calcular o comportamento financeiro do cliente em duas janelas temporais móveis:
 
----
+* **Janela Diária:** A soma de todos os saques com data igual à data atual não pode exceder **R$ 1.000,00**.
+* **Janela Mensal:** A soma de todos os saques com mês e ano iguais ao mês/ano atual não pode exceder **R$ 5.000,00**.
 
-### SYS-RF-04 — Emissão de Extrato Simplificado
+#### SYS-RN-09 — Amortização Automática de Passivos
 
-**Prioridade:** Média
+Caso a conta do cliente esteja operando com o saldo negativo (utilizando o Cheque Especial), qualquer entrada financeira oriunda da função de Depósito será utilizada prioritariamente para cobrir o saldo devedor.
 
-#### Descrição
+* **Exemplo:** Se a conta possui saldo de -R$ 200,00 e o cliente deposita R$ 500,00, o saldo final resultante será ajustado de forma transparente para +R$ 300,00, liberando o limite do cheque especial de volta ao seu estado original de repouso.
 
-O sistema deve exibir as últimas movimentações realizadas na conta.
+#### SYS-RN-10 — Elegibilidade para Encerramento de Conta
 
-#### Critério de Aceitação
+O encerramento lógico de uma conta corrente exige a neutralidade patrimonial absoluta do cliente com a instituição financeira, ou seja, o **Saldo Atual deve ser igual a R$ 0,00**.
 
-* O extrato deve apresentar somente as últimas 3 transações.
-* O sistema deve exibir:
+* **Bloqueio Positivo:** Se houver saldo remanescente, a conta não pode ser apagada (o cliente deve sacar ou transferir o valor).
+* **Bloqueio Negativo:** Se houver utilização ativa do cheque especial, a exclusão é vetada até que o cliente realize um depósito compensatório.
 
-  * tipo da operação;
-  * valor;
-  * saldo resultante;
-  * data/hora.
+#### SYS-RN-11 — Hierarquia de Crédito (Privilégio do Administrador)
 
----
+O Painel Administrativo autenticado detém soberania sobre os parâmetros individuais das contas. O Administrador do sistema pode buscar qualquer CPF ativo e definir um novo limite de Cheque Especial sem obedecer ao teto da SYS-RN-07.
 
-### SYS-RF-05 — Encerramento de Conta
+* **Auditoria:** Toda alteração manual de limite realizada pelo Administrador deve injetar uma transação fictícia de valor zero (R$ 0,00) no extrato do cliente para rastreabilidade de auditoria interna, documentando o novo limite conhecido.
 
-**Prioridade:** Média
+### 4.3 Requisitos Não Funcionais (RNF)
 
-#### Descrição
-
-O sistema deve permitir o encerramento lógico da conta bancária.
-
-#### Critério de Aceitação
-
-* O saldo da conta deve ser igual a R$ 0,00.
-* Não pode existir utilização ativa do cheque especial.
+* **SYS-RNF-01 (Robustez de Entrada):** O sistema deve interceptar falhas do tipo `ValueError` em qualquer entrada de dados via console e reiniciar a coleta de dados sem derrubar o processo.
+* **SYS-RNF-02 (Estilo e Padronização Visual):** Telas de visualização institucional ou menus estruturados devem utilizar o caractere denso `▓` para delimitação de caixas de texto.
 
 ---
 
-# 4.2 Regras de Negócio (Business Rules)
+## 5. Matriz de Rastreabilidade Atualizada
+
+| ID Requisito | Regra Associada | Sprint | Objetivo de Verificação |
+| --- | --- | --- | --- |
+| **SYS-RF-01** | SYS-RN-03 / SYS-RN-04 | Sprint 1 | Validar CPF matemático e bloquear saldo inicial > R$ 10k |
+| **SYS-RF-02** | SYS-RN-01 / SYS-RN-02 | Sprint 2 | Somar saques do dia/mês no fuso UTC-3 e aplicar taxa de R$ 2,50 |
+| **SYS-RF-04** | N/A | Sprint 3 | Modificar limite de cheque especial de conta específica via ADM |
+| **SYS-RF-05** | SYS-RNF-02 | Sprint 3 | Renderizar tela de tarifas envelopada em blocos ▓ |
 
 ---
 
-### SYS-RN-01 — Invariante de Saldo para Saques
+## 6. Fluxogramas e Protótipos de Processo (CLI)
 
-Toda operação de saque deve obedecer à seguinte restrição matemática:
+### 6.1 Fluxo Atualizado de Abertura de Conta
 
-Valor_{Saque}+Taxa_{Operacional}\le Saldo_{Atual}+Limite_{ChequeEspecial}
+```text
+[Menu Opção 1] ──► Digitar CPF ──► Validação Algorítmica (Módulo 11)
+                                      │
+                                      ├──► Inválido/Duplicado ──► Retorna Erro
+                                      └──► Válido ──► Digitar Data Nasc.
+                                                        │
+    ┌───────────────────────────────────────────────────┘
+    ▼
+Validar se Data > Hoje (Brasília) ──► Sim ──► Retorna Erro
+    │
+    └──► Não ──► Coletar Saldo Inicial (Max R$ 10.000,00)
+                   │
+                   └──► Coletar Limite Especial (Max R$ 5.000,00) ──► Conta Criada!
 
----
+```
 
-### SYS-RN-02 — Tarifa Operacional Fixa
-
-Todo saque autorizado deve debitar automaticamente uma taxa operacional fixa de R$ 2,50.
-
----
-
-### SYS-RN-03 — Unicidade de CPF
-
-O sistema deve impedir múltiplas contas vinculadas ao mesmo CPF.
-
----
-
-### SYS-RN-04 — Regra de Encerramento
-
-Contas com saldo diferente de zero não podem ser encerradas.
-
----
-
-### SYS-RN-05 — Regra de Amortização Automática
-
-Todo depósito realizado em conta com saldo negativo deve ser utilizado prioritariamente para redução do valor utilizado do cheque especial.
-
----
-
-# 4.3 Requisitos Não Funcionais (Non-Functional Requirements)
-
----
-
-### SYS-RNF-01 — Parametrização
-
-A taxa operacional de saque deve estar isolada em variável configurável, permitindo futuras alterações sem modificação da lógica principal.
-
----
-
-### SYS-RNF-02 — Robustez
-
-O sistema deve tratar erros de entrada utilizando estruturas `try-except`, evitando falhas da aplicação.
-
----
-
-### SYS-RNF-03 — Persistência Temporária
-
-O sistema deve manter os dados apenas em memória RAM durante a execução da aplicação.
-
----
-
-### SYS-RNF-04 — Interface CLI
-
-O sistema deve operar exclusivamente via terminal de comandos.
-
----
-
-# 5. Restrições do Sistema
-
-* O sistema não utilizará banco de dados nesta versão.
-* O sistema não possuirá autenticação de usuários.
-* O sistema funcionará apenas em ambiente local.
-* O sistema utilizará interface textual CLI.
-
----
-
-# 6. Matriz de Rastreabilidade
-
-| ID Requisito | Regra Associada       | Sprint   | Objetivo de Verificação          |
-| ------------ | --------------------- | -------- | -------------------------------- |
-| SYS-RF-01    | SYS-RN-03             | Sprint 1 | Validar CPF duplicado            |
-| SYS-RF-02    | SYS-RN-05             | Sprint 1 | Validar amortização automática   |
-| SYS-RF-03    | SYS-RN-01 / SYS-RN-02 | Sprint 2 | Validar saque e taxa             |
-| SYS-RF-04    | N/A                   | Sprint 2 | Validar limite de 3 operações    |
-| SYS-RF-05    | SYS-RN-04             | Sprint 2 | Validar bloqueio de encerramento |
-
----
-
-# 7. Critérios Gerais de Aceitação
-
-* Todas as operações devem atualizar o saldo corretamente.
-* Nenhuma operação deve gerar inconsistência financeira.
-* O sistema não deve encerrar inesperadamente por erro de entrada.
-* O histórico deve registrar corretamente todas as operações.
-
-  # 8. Protótipo de Interface CLI
-
-O protótipo representa o fluxo de navegação do usuário dentro do sistema BankPython antes da implementação final em Python.
-
-## Menu Principal
+### 6.2 Visualização da Interface Institucional (Opção 4)
 
 ```text
 ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
-▓                        SEJA BEM-VINDO AO                           ▓
-▓                           BANKPYTHON                               ▓
 ▓                                                                    ▓
-▓ [1] Abrir Conta                                                    ▓
-▓ [2] Acessar Conta                                                  ▓
-▓ [3] Painel ADM                                                     ▓
-▓                                                                    ▓
-▓ [0] Sair                                                           ▓
+▓                  INFORMAÇÕES E TARIFAS VIGENTES                    ▓
 ▓                                                                    ▓
 ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+▓                                                                    ▓
+▓ - Tarifa de Saque por Operação: R$ 2.50                            ▓
+▓ - Limite de Saque Diário: R$ 1000.00                               ▓
+▓ - Limite de Saque Mensal: R$ 5000.00                               ▓
+▓ - Cheque Especial Máximo Inicial: R$ 5000.00                       ▓
+▓ - Saldo Inicial Máximo Permitido: R$ 10000.00                      ▓
+▓                                                                    ▓
+▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+
 ```
 
----
-
-## Fluxo de Abertura de Conta
+### 6.3 Fluxo Administrativo de Ajuste Fino de Conta Específica
 
 ```text
-Abrir Conta
-     │
-     ▼
-Informar CPF
-     │
-     ▼
-CPF já existe?
- ┌── Sim ──► Exibir erro
- │
- Não
- │
- ▼
-Informar Data de Nascimento
-     │
-     ▼
-Informar Saldo Inicial
-     │
-     ▼
-Informar Limite do Cheque Especial
-     │
-     ▼
-Criar Conta
-     │
-     ▼
-Conta criada com sucesso
+[Painel ADM -> Opção 3] ──► Solicitar CPF Alvo
+                               │
+                               ├──► Não Existe ──► Retorna Erro
+                               └──► Existe ──► Exibe Limite Atual
+                                                  │
+                                                  ▼
+                                       Inserir Novo Limite (Float)
+                                                  │
+                                                  ▼
+                                       Grava dado no CPF informado
+                                       & Registra Transação de Auditoria
+
 ```
-
----
-
-## Área do Cliente
-
-```text
-ÁREA DO CLIENTE
-
-[1] Depositar
-[2] Sacar
-[3] Consultar Extrato
-[4] Encerrar Conta
-[0] Logout
-```
-
----
-
-## Fluxo de Depósito
-
-```text
-Depositar
-    │
-    ▼
-Informar Valor
-    │
-    ▼
-Valor válido?
- ┌── Não ──► Exibir erro
- │
- Sim
- │
- ▼
-Atualizar Saldo
-    │
-    ▼
-Registrar Transação
-    │
-    ▼
-Operação Concluída
-```
-
----
-
-## Fluxo de Saque
-
-```text
-Sacar
-    │
-    ▼
-Informar Valor
-    │
-    ▼
-Validar Limite Diário
-    │
-    ▼
-Validar Limite Mensal
-    │
-    ▼
-Validar Saldo + Cheque Especial
-    │
-    ▼
-Aplicar Taxa de R$ 2,50
-    │
-    ▼
-Atualizar Saldo
-    │
-    ▼
-Registrar Transação
-    │
-    ▼
-Operação Concluída
-```
-
----
-
-## Fluxo de Consulta de Extrato
-
-```text
-Consultar Extrato
-        │
-        ▼
-Buscar Últimas 3 Transações
-        │
-        ▼
-Exibir:
-- Data/Hora
-- Tipo
-- Valor
-- Saldo Resultante
-```
-
----
-
-## Fluxo de Encerramento de Conta
-
-```text
-Encerrar Conta
-       │
-       ▼
-Saldo é igual a R$ 0,00?
-       │
- ┌─────┴─────┐
- │           │
-Não         Sim
- │           │
- ▼           ▼
-Exibir      Remover Conta
-Erro         do Sistema
-               │
-               ▼
-       Encerramento Concluído
-```
-
----
-
-## Fluxo do Painel Administrativo
-
-```text
-Painel ADM
-     │
-     ▼
-Autenticação
-     │
-     ▼
-Credenciais válidas?
- ┌── Não ──► Acesso Negado
- │
- Sim
- │
- ▼
-[1] Listar Contas
-[2] Configurar Taxas e Limites
-[3] Patrimônio do Banco
-[0] Voltar
-```
-
