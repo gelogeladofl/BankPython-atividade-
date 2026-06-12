@@ -293,3 +293,190 @@ O sistema deve operar exclusivamente via terminal de comandos.
 * Nenhuma operação deve gerar inconsistência financeira.
 * O sistema não deve encerrar inesperadamente por erro de entrada.
 * O histórico deve registrar corretamente todas as operações.
+
+  # 8. Protótipo de Interface CLI
+
+O protótipo representa o fluxo de navegação do usuário dentro do sistema BankPython antes da implementação final em Python.
+
+## Menu Principal
+
+```text
+▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+▓                        SEJA BEM-VINDO AO                           ▓
+▓                           BANKPYTHON                               ▓
+▓                                                                    ▓
+▓ [1] Abrir Conta                                                    ▓
+▓ [2] Acessar Conta                                                  ▓
+▓ [3] Painel ADM                                                     ▓
+▓                                                                    ▓
+▓ [0] Sair                                                           ▓
+▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+```
+
+---
+
+## Fluxo de Abertura de Conta
+
+```text
+Abrir Conta
+     │
+     ▼
+Informar CPF
+     │
+     ▼
+CPF já existe?
+ ┌── Sim ──► Exibir erro
+ │
+ Não
+ │
+ ▼
+Informar Data de Nascimento
+     │
+     ▼
+Informar Saldo Inicial
+     │
+     ▼
+Informar Limite do Cheque Especial
+     │
+     ▼
+Criar Conta
+     │
+     ▼
+Conta criada com sucesso
+```
+
+---
+
+## Área do Cliente
+
+```text
+ÁREA DO CLIENTE
+
+[1] Depositar
+[2] Sacar
+[3] Consultar Extrato
+[4] Encerrar Conta
+[0] Logout
+```
+
+---
+
+## Fluxo de Depósito
+
+```text
+Depositar
+    │
+    ▼
+Informar Valor
+    │
+    ▼
+Valor válido?
+ ┌── Não ──► Exibir erro
+ │
+ Sim
+ │
+ ▼
+Atualizar Saldo
+    │
+    ▼
+Registrar Transação
+    │
+    ▼
+Operação Concluída
+```
+
+---
+
+## Fluxo de Saque
+
+```text
+Sacar
+    │
+    ▼
+Informar Valor
+    │
+    ▼
+Validar Limite Diário
+    │
+    ▼
+Validar Limite Mensal
+    │
+    ▼
+Validar Saldo + Cheque Especial
+    │
+    ▼
+Aplicar Taxa de R$ 2,50
+    │
+    ▼
+Atualizar Saldo
+    │
+    ▼
+Registrar Transação
+    │
+    ▼
+Operação Concluída
+```
+
+---
+
+## Fluxo de Consulta de Extrato
+
+```text
+Consultar Extrato
+        │
+        ▼
+Buscar Últimas 3 Transações
+        │
+        ▼
+Exibir:
+- Data/Hora
+- Tipo
+- Valor
+- Saldo Resultante
+```
+
+---
+
+## Fluxo de Encerramento de Conta
+
+```text
+Encerrar Conta
+       │
+       ▼
+Saldo é igual a R$ 0,00?
+       │
+ ┌─────┴─────┐
+ │           │
+Não         Sim
+ │           │
+ ▼           ▼
+Exibir      Remover Conta
+Erro         do Sistema
+               │
+               ▼
+       Encerramento Concluído
+```
+
+---
+
+## Fluxo do Painel Administrativo
+
+```text
+Painel ADM
+     │
+     ▼
+Autenticação
+     │
+     ▼
+Credenciais válidas?
+ ┌── Não ──► Acesso Negado
+ │
+ Sim
+ │
+ ▼
+[1] Listar Contas
+[2] Configurar Taxas e Limites
+[3] Patrimônio do Banco
+[0] Voltar
+```
+
