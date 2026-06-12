@@ -39,10 +39,78 @@ O sistema é composto por três módulos principais:
 ```
 
 ---
+# 3. Histórias de Usuário (User Stories)
 
-# 3. Requisitos do Sistema
+As histórias de usuário representam as necessidades identificadas durante a etapa de levantamento de requisitos junto ao cliente e servem como base para os requisitos funcionais do sistema.
 
-## 3.1 Requisitos Funcionais (Functional Requirements)
+## US-01 — Abertura de Conta Corrente
+
+**Como** cliente bancário, **eu quero** abrir uma conta corrente digital **para** realizar operações financeiras de forma segura e organizada.
+
+### Critérios de Aceitação
+
+* Informar CPF, data de nascimento, saldo inicial e limite de cheque especial.
+* O CPF não pode existir previamente no sistema.
+* A conta deve ser criada com sucesso.
+
+---
+
+## US-02 — Realizar Depósito
+
+**Como** cliente bancário, **eu quero** depositar dinheiro em minha conta **para** aumentar meu saldo disponível.
+
+### Critérios de Aceitação
+
+* O valor informado deve ser maior que zero.
+* O saldo deve ser atualizado imediatamente.
+* O depósito deve ser registrado no histórico de movimentações.
+* Caso exista utilização do cheque especial, o depósito deve amortizar automaticamente o saldo negativo.
+
+---
+
+## US-03 — Realizar Saque
+
+**Como** cliente bancário, **eu quero** sacar dinheiro da minha conta **para** utilizar meus recursos financeiros quando necessário.
+
+### Critérios de Aceitação
+
+* O sistema deve validar saldo e limite do cheque especial.
+* Deve ser aplicada automaticamente a taxa operacional de R$ 2,50.
+* O valor solicitado não pode ultrapassar o limite permitido.
+* O saldo deve ser atualizado imediatamente.
+* A operação deve ser registrada no histórico.
+
+---
+
+## US-04 — Consultar Extrato
+
+**Como** cliente bancário, **eu quero** consultar meu extrato simplificado **para** acompanhar minhas movimentações financeiras recentes.
+
+### Critérios de Aceitação
+
+* O sistema deve exibir as últimas três movimentações realizadas.
+* Cada movimentação deve apresentar:
+
+  * Tipo da operação;
+  * Valor movimentado;
+  * Saldo resultante;
+  * Data e hora da operação.
+
+---
+
+## US-05 — Encerrar Conta
+
+**Como** cliente bancário, **eu quero** encerrar minha conta corrente **para** finalizar meu relacionamento com o banco digital.
+
+### Critérios de Aceitação
+
+* O saldo da conta deve ser igual a R$ 0,00.
+* Não pode existir utilização ativa do cheque especial.
+* O sistema deve confirmar o encerramento da conta.
+
+# 4. Requisitos do Sistema
+
+## 4.1 Requisitos Funcionais (Functional Requirements)
 
 ---
 
@@ -134,7 +202,7 @@ O sistema deve permitir o encerramento lógico da conta bancária.
 
 ---
 
-# 3.2 Regras de Negócio (Business Rules)
+# 4.2 Regras de Negócio (Business Rules)
 
 ---
 
@@ -170,7 +238,7 @@ Todo depósito realizado em conta com saldo negativo deve ser utilizado priorita
 
 ---
 
-# 3.3 Requisitos Não Funcionais (Non-Functional Requirements)
+# 4.3 Requisitos Não Funcionais (Non-Functional Requirements)
 
 ---
 
@@ -198,7 +266,7 @@ O sistema deve operar exclusivamente via terminal de comandos.
 
 ---
 
-# 4. Restrições do Sistema
+# 5. Restrições do Sistema
 
 * O sistema não utilizará banco de dados nesta versão.
 * O sistema não possuirá autenticação de usuários.
@@ -207,7 +275,7 @@ O sistema deve operar exclusivamente via terminal de comandos.
 
 ---
 
-# 5. Matriz de Rastreabilidade
+# 6. Matriz de Rastreabilidade
 
 | ID Requisito | Regra Associada       | Sprint   | Objetivo de Verificação          |
 | ------------ | --------------------- | -------- | -------------------------------- |
@@ -219,7 +287,7 @@ O sistema deve operar exclusivamente via terminal de comandos.
 
 ---
 
-# 6. Critérios Gerais de Aceitação
+# 7. Critérios Gerais de Aceitação
 
 * Todas as operações devem atualizar o saldo corretamente.
 * Nenhuma operação deve gerar inconsistência financeira.
